@@ -29,45 +29,112 @@ class Quiz extends StatefulWidget {
 class _QuizState extends State<Quiz> {
   final List<Map<String, dynamic>> questions = [
     {
-      'Q': 'what is java?',
-      'choice': ['peogramin', 'coffee', 'car', 'animal'],
+      'category': 'Programming',
+      'Q': 'What is Java?',
+      'choice': ['Programming language', 'Coffee', 'Car', 'Animal'],
     },
     {
-      'Q': 'what is javaghj?',
-      'choice': ['peogramin', 'coffeghje', 'car', 'animal'],
+      'category': 'Programming',
+      'Q': 'What is Python?',
+      'choice': ['Programming language', 'Snake', 'Drink', 'Bike'],
     },
     {
-      'Q': 'what is javaghjk?',
-      'choice': ['peohjkkgramin', 'coffee', 'car', 'animal'],
+      'category': 'Science',
+      'Q': 'What is Gravity?',
+      'choice': ['Force', 'Animal', 'Planet', 'Gas'],
     },
   ];
-  int CurrentQuationIndex = 0;
+
+  String? selectedCategory;
+  List<Map<String, dynamic>> filteredQuestions = [];
+  int currentQuestionIndex = 0;
+
+  void filterQuestionsByCategory(String category) {
+    setState(() {
+      selectedCategory = category;
+      filteredQuestions =
+          questions.where((q) => q['category'] == category).toList();
+      currentQuestionIndex = 0;
+    });
+  }
+
   void goToNext() {
     setState(() {
-      if (CurrentQuationIndex < questions.length - 1) {
-        CurrentQuationIndex++;
+      if (currentQuestionIndex < filteredQuestions.length - 1) {
+        currentQuestionIndex++;
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("you reached the end")));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("You reached the end")),
+        );
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final current = questions[CurrentQuationIndex];
+    final categories = questions
+        .map((q) => q['category'] as String)
+        .toSet()
+        .toList(); // get unique categories
+
+    if (filteredQuestions.isEmpty) {
+      return Scaffold(
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              DropdownButton<String>(
+                hint: const Text('Select Category'),
+                value: selectedCategory,
+                onChanged: (value) {
+                  if (value != null) {
+                    filterQuestionsByCategory(value);
+                  }
+                },
+                items: categories.map((category) {
+                  return DropdownMenuItem(
+                    value: category,
+                    child: Text(category),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 20),
+              const Text('Please select a category to begin.'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final current = filteredQuestions[currentQuestionIndex];
     final String questionText = current['Q'];
     final List<String> choices = List<String>.from(current['choice']);
+
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            DropdownButton<String>(
+              hint: const Text('Select Category'),
+              value: selectedCategory,
+              onChanged: (value) {
+                if (value != null) {
+                  filterQuestionsByCategory(value);
+                }
+              },
+              items: categories.map((category) {
+                return DropdownMenuItem(
+                  value: category,
+                  child: Text(category),
+                );
+              }).toList(),
+            ),
             Text(
-              'Question ${CurrentQuationIndex + 1}: $questionText',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              'Question ${currentQuestionIndex + 1}: $questionText',
+              style:
+                  const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             ...choices.map((choice) {
@@ -78,16 +145,10 @@ class _QuizState extends State<Quiz> {
                 child: Text(choice),
               );
             }).toList(),
-
             const Spacer(),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  goToNext();
-                },
-                child: const Text('NEXT'),
-              ),
+            ElevatedButton(
+              onPressed: goToNext,
+              child: const Text('NEXT'),
             ),
           ],
         ),
