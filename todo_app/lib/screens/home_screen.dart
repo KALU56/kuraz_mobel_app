@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'task_page.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -8,12 +9,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String selectedCategory = 'All';
+  String selectedCategory = 'Default';
   bool isSearching = false;
-  final TextEditingController searchController = TextEditingController();
 
   final List<String> categories = [
-    'All',
+    'Default',
     'Personal',
     'Shopping',
     'Wishlist',
@@ -22,14 +22,15 @@ class _HomeScreenState extends State<HomeScreen> {
     'New List',
   ];
 
-  void _onCategorySelected(String? value) {
-    if (value == 'New List') {
+  final TextEditingController _searchController = TextEditingController();
+
+  void _handleCategoryChange(String? newCategory) {
+    if (newCategory == 'New List') {
       _showNewListDialog();
-    } else if (value != null) {
+    } else {
       setState(() {
-        selectedCategory = value;
+        selectedCategory = newCategory!;
       });
-      print('Navigate to: $value');
     }
   }
 
@@ -37,146 +38,96 @@ class _HomeScreenState extends State<HomeScreen> {
     String newListName = '';
     showDialog(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("New List"),
-          content: TextField(
-            autofocus: true,
-            decoration: const InputDecoration(hintText: "Enter list name"),
-            onChanged: (value) {
-              newListName = value;
+      builder: (context) => AlertDialog(
+        title: const Text('Enter New List Name'),
+        content: TextField(
+          onChanged: (value) => newListName = value,
+          decoration: const InputDecoration(hintText: 'New List'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              if (newListName.isNotEmpty) {
+                setState(() {
+                  categories.insert(categories.length - 1, newListName);
+                  selectedCategory = newListName;
+                });
+              }
+              Navigator.of(context).pop();
             },
+            child: const Text('Add'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (newListName.isNotEmpty) {
-                  setState(() {
-                    selectedCategory = newListName;
-                    categories.insert(categories.length - 1, newListName);
-                  });
-                }
-                Navigator.pop(context);
-              },
-              child: const Text("Create"),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildNormalAppBar() {
-    return Row(
-      children: [
-        // Blue circle with check icon
-        Container(
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.blue,
-          ),
-          padding: const EdgeInsets.all(6),
-          child: const Icon(Icons.check, color: Colors.white, size: 20),
-        ),
-        const SizedBox(width: 8),
-
-        // Dropdown for categories
-        DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: selectedCategory,
-            icon: const Icon(Icons.arrow_drop_down, color: Colors.black),
-            dropdownColor: Colors.white,
-            style: const TextStyle(color: Colors.black, fontSize: 18),
-            onChanged: _onCategorySelected,
-            items: categories.map((String category) {
-              return DropdownMenuItem<String>(
-                value: category,
-                child: Text(category),
-              );
-            }).toList(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSearchAppBar() {
-    return Row(
-      children: [
-        IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            setState(() {
-              isSearching = false;
-              searchController.clear();
-            });
-          },
-        ),
-        const Icon(Icons.search, color: Colors.black),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextField(
-            controller: searchController,
-            decoration: const InputDecoration(
-              hintText: "Search",
-              border: InputBorder.none,
-            ),
-            style: const TextStyle(fontSize: 16),
-            onChanged: (value) {
-              print("Searching for: $value");
-            },
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue[100],
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 1,
-        titleSpacing: 16,
-        title: isSearching ? _buildSearchAppBar() : _buildNormalAppBar(),
-        actions: isSearching
-            ? null
-            : [
-                IconButton(
-                  icon: const Icon(Icons.search, color: Colors.black),
+        backgroundColor: Colors.blue,
+        title: isSearching
+            ? TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  hintText: 'Search',
+                  hintStyle: TextStyle(color: Colors.white54),
+                  border: InputBorder.none,
+                ),
+              )
+            : Row(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    padding: const EdgeInsets.all(6),
+                    child: const Icon(Icons.check, color: Colors.blue),
+                  ),
+                  const SizedBox(width: 8),
+                  DropdownButton<String>(
+                    value: selectedCategory,
+                    dropdownColor: Colors.blue, // Blue dropdown background
+                    style: const TextStyle(color: Colors.white),
+                    iconEnabledColor: Colors.white,
+                    underline: const SizedBox(),
+                    items: categories
+                        .map((cat) => DropdownMenuItem<String>(
+                              value: cat,
+                              child: Text(cat),
+                            ))
+                        .toList(),
+                    onChanged: _handleCategoryChange,
+                  ),
+                ],
+              ),
+        actions: [
+          isSearching
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    setState(() {
+                      isSearching = false;
+                      _searchController.clear();
+                    });
+                  },
+                )
+              : IconButton(
+                  icon: const Icon(Icons.search),
                   onPressed: () {
                     setState(() {
                       isSearching = true;
                     });
                   },
                 ),
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert, color: Colors.black),
-                  onSelected: (value) {
-                    print("Selected menu: $value");
-                  },
-                  itemBuilder: (BuildContext context) {
-                    return ['Settings', 'Help', 'About'].map((String choice) {
-                      return PopupMenuItem<String>(
-                        value: choice,
-                        child: Text(choice),
-                      );
-                    }).toList();
-                  },
-                ),
-              ],
+          const SizedBox(width: 8),
+          const Icon(Icons.more_vert, color: Colors.white),
+        ],
       ),
-      body: Center(
-        child: Text(
-          'Showing tasks for: $selectedCategory',
-          style: const TextStyle(fontSize: 18),
-        ),
-      ),
+      body: TaskPage(category: selectedCategory),
     );
   }
 }
