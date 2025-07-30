@@ -41,6 +41,7 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
         title: const Text('New List'),
         content: TextField(
           autofocus: true,
@@ -62,65 +63,137 @@ class _NewTaskScreenState extends State<NewTaskScreen> {
     );
   }
 
+  void _saveTask() {
+    final title = _titleController.text.trim();
+    final dueDate = _dueDateController.text.trim();
+    final category = _selectedCategory ?? 'Default';
+
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a task title')),
+      );
+      return;
+    }
+
+    final newTask = {
+      'title': title,
+      'dueDate': dueDate,
+      'category': category,
+    };
+
+    Navigator.pop(context, newTask);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white, // ⬅️ Clean white background
       appBar: AppBar(
+        backgroundColor: Colors.blue[600],
+        elevation: 0,
         title: const Text('New Task'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.pop(context, false),
         ),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('What is to be done?', style: TextStyle(fontSize: 16)),
+            const Text(
+              'What is to be done?',
+              style: TextStyle(fontSize: 16, color: Colors.black87),
             ),
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(hintText: 'Task title'),
-            ),
+            const SizedBox(height: 8),
+            _buildTextField(_titleController, 'Task title'),
             const SizedBox(height: 20),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Due Date', style: TextStyle(fontSize: 16)),
+            const Text(
+              'Due Date',
+              style: TextStyle(fontSize: 16, color: Colors.black87),
             ),
-            TextField(
-              controller: _dueDateController,
-              decoration: const InputDecoration(hintText: 'Select date'),
-            ),
+            const SizedBox(height: 8),
+            _buildTextField(_dueDateController, 'Select due date'),
             const SizedBox(height: 20),
+            const Text(
+              'Add to List',
+              style: TextStyle(fontSize: 16, color: Colors.black87),
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
-                const Text('Add to List: ', style: TextStyle(fontSize: 16)),
                 Expanded(
-                  child: DropdownButton<String>(
-                    value: _selectedCategory,
-                    isExpanded: true,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategory = value!;
-                      });
-                    },
-                    items: _categories
-                        .map((cat) => DropdownMenuItem(
-                              value: cat,
-                              child: Text(cat),
-                            ))
-                        .toList(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButton<String>(
+                      value: _selectedCategory,
+                      dropdownColor: Colors.blue[100],
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      style: const TextStyle(color: Colors.black87),
+                      iconEnabledColor: Colors.blue,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedCategory = value!;
+                        });
+                      },
+                      items: _categories
+                          .map((cat) => DropdownMenuItem(
+                                value: cat,
+                                child: Text(cat),
+                              ))
+                          .toList(),
+                    ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.add),
+                  icon: const Icon(Icons.add, color: Colors.blue),
                   onPressed: _showAddCategoryDialog,
-                )
+                ),
               ],
-            )
+            ),
+            const SizedBox(height: 80),
           ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          onPressed: _saveTask,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue[600],
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text(
+            'Save',
+            style: TextStyle(fontSize: 18),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String hint) {
+    return TextField(
+      controller: controller,
+      style: const TextStyle(color: Colors.black87),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.black54),
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
         ),
       ),
     );

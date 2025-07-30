@@ -29,7 +29,7 @@ class CategoryScreen extends StatelessWidget {
             ),
           );
         },
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.blue[800],
         child: const Icon(Icons.add, color: Colors.blue),
       ),
     );

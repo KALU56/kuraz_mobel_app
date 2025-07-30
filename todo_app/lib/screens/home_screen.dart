@@ -127,7 +127,10 @@ class _HomeScreenState extends State<HomeScreen> {
           const Icon(Icons.more_vert, color: Colors.white),
         ],
       ),
-      body: TaskPage(category: selectedCategory),
+      body: Container(
+        color: Colors.blue[800],
+        child: TaskPage(category: selectedCategory),
+      ),
     );
   }
 }
