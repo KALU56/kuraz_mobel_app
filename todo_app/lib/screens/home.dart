@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:todo_app/core/assets.dart';
+import 'package:provider/provider.dart';
+import 'package:todo_app/providers/task_provider.dart';
+
 import 'package:todo_app/screens/all_detal.dart';
-import 'package:todo_app/widget/continer.dart';
-import 'package:todo_app/widget/continer2.dart';
+import 'package:todo_app/widget/task_card.dart';
+import 'package:todo_app/widget/task_list.dart';
+
+
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -13,203 +17,204 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   TimeOfDay _timeOfDay = TimeOfDay.now();
-  bool isChecked = false;
+  DateTime _selectedDate = DateTime.now();
+
   @override
   Widget build(BuildContext context) {
+    final taskProvider = Provider.of<TaskProvider>(context);
+
     return Scaffold(
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hello jack',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-
-                          Text('you have work today'),
-                        ],
-                      ),
-
-                      Icon(Icons.notification_add),
-                    ],
-                  ),
-
-                  Row(
-                    children: [
-                      TaskCard(
-                        title: "Today",
-                        image: AssetImage(Assets.clock),
-                        backgroundColor: Color.fromRGBO(181, 194, 251, 1.0),
-                        count: 6,
-                        onTap: () {},
-                      ),
-                      const SizedBox(width: 10),
-                      TaskCard(
-                        title: "Schedule",
-                        image: AssetImage(Assets.schedule),
-                        backgroundColor: Color.fromRGBO(255, 245, 128, 1.0),
-                        count: 5,
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 20),
-
-                  Row(
-                    children: [
-                      TaskCard(
-                        title: "All",
-                        image: AssetImage(Assets.all),
-                        backgroundColor: Color.fromRGBO(208, 245, 235, 1.0),
-                        count: 14,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => AllDetal()),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 10),
-                      TaskCard(
-                        title: "Overdue",
-                        image: AssetImage(Assets.over),
-                        backgroundColor: Color.fromRGBO(253, 192, 245, 1.0),
-                        count: 3,
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 15),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 25),
-                    child: Text(
-                      'Today task',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 5),
-                  Container(),
-                  TaskList(
-                    title: "project retrospective",
-                    day: 'Today',
-                    icon: Icons.access_time,
-                    time: "4:00 pm",
-                    image: AssetImage(Assets.dot),
-                  ),
-                  /////#1
-                  SizedBox(height: 20),
-                  TaskList(
-                    title: "Evening team meeting",
-                    day: 'Today',
-                    icon: Icons.access_time,
-                    time: "4:00 pm",
-                    image: AssetImage(Assets.dot),
-                  ),
-                  /////#2
-                  SizedBox(height: 20),
-                  TaskList(
-                    title: "Create monthly deck",
-                    day: 'Today',
-                    icon: Icons.access_time,
-                    time: "4:00 pm",
-                    image: AssetImage(Assets.dot),
-                  ),
-
-                  /////#3
-                  SizedBox(height: 20),
-                  TaskList(
-                    title: "Shop for groceries",
-                    day: 'Today',
-                    icon: Icons.access_time,
-                    time: "4:00 pm",
-                    image: AssetImage(Assets.dot),
-                  ),
-                  /////#4
-                  SizedBox(height: 20),
-                  TaskList(
-                    title: "Read book",
-                    day: 'Today',
-                    icon: Icons.access_time,
-                    time: "4:00 pm",
-                    image: AssetImage(Assets.dot),
-                  ),
-                ],
-              ),
+    appBar: AppBar(
+      title: Text(
+        'Hello ',
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Align(
-              alignment: Alignment.bottomRight,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.notifications),
+          onPressed: () {},
+        ),
+      ],
+    ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+          
+            const SizedBox(height: 24),
+            
+            // Task Summary Cards
+            Row(
+              children: [
+                TaskCard(
+                  title: "Today",
+                  icon: Icons.today,
+                  count: taskProvider.todayTaskCount,
+                  color: Colors.blue[100]!,
+                  onTap: () {},
                 ),
-                child: IconButton(
-                  icon: Icon(Icons.add, color: Colors.white),
-                  onPressed: () {
-                    opensmallscreen();
+                const SizedBox(width: 16),
+                TaskCard(
+                  title: "Completed",
+                  icon: Icons.check_circle,
+                  count: taskProvider.completedTaskCount,
+                  color: Colors.green[100]!,
+                  onTap: () {},
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                TaskCard(
+                  title: "All",
+                  icon: Icons.list,
+                  count: taskProvider.allTaskCount,
+                  color: Colors.purple[100]!,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AllDetail()),
+                    );
                   },
                 ),
-              ),
+                const SizedBox(width: 16),
+                TaskCard(
+                  title: "Overdue",
+                  icon: Icons.warning,
+                  count: taskProvider.overdueTaskCount,
+                  color: Colors.orange[100]!,
+                  onTap: () {},
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: 32),
+            
+            // Today's Tasks
+            Text(
+              'Today\'s Tasks',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 16),
+            
+            if (taskProvider.todayTasks.isEmpty)
+              const Center(
+                child: Text('No tasks for today'),
+              )
+            else
+              Column(
+                children: taskProvider.todayTasks.map((task) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: TaskList(
+                      task: task,
+                      onCheckboxChanged: (value) {
+                        taskProvider.toggleTaskCompletion(task.id);
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddTaskDialog(context),
+        child: const Icon(Icons.add),
       ),
     );
   }
 
-  Future opensmallscreen() => showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(' add new task'),
-      content: Container(
-        height: 100,
-        child: Column(
-          
-          children: [
-            TextField(decoration: InputDecoration(hintText: 'ENTER YOUR TASK')),
-            GestureDetector(
-              onTap: (){
-                _selectTime();
-              },
-              child: Text(
-                '${_timeOfDay.hour}:${_timeOfDay.minute}',
-                 style: const TextStyle(fontSize: 20),
-              ),
-            )
-          ],
-        ),
-      ),
-      actions: [TextButton(onPressed: () {}, child: Text('save'))],
-    ),
-  );
-  Future<void> _selectTime() async {
-    await showTimePicker(
-      initialTime: _timeOfDay,
+  Future<void> _showAddTaskDialog(BuildContext context) async {
+    String taskTitle = '';
+    TimeOfDay selectedTime = _timeOfDay;
+    DateTime selectedDate = _selectedDate;
+
+    await showDialog(
       context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add New Task'),
+          content: SizedBox(
+            height: 180,
+            child: Column(
+              children: [
+                TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Task Title',
+                    border: OutlineInputBorder(),
+                  ),
+                  onChanged: (value) => taskTitle = value,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: selectedDate,
+                            firstDate: DateTime.now(),
+                            lastDate: DateTime(2100),
+                          );
+                          if (date != null) {
+                            selectedDate = date;
+                          }
+                        },
+                        child: Text(
+                          '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () async {
+                          final time = await showTimePicker(
+                            context: context,
+                            initialTime: selectedTime,
+                          );
+                          if (time != null) {
+                            selectedTime = time;
+                          }
+                        },
+                        child: Text(
+                          selectedTime.format(context),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (taskTitle.isNotEmpty) {
+                  Provider.of<TaskProvider>(context, listen: false).addTask(
+                    taskTitle,
+                    selectedTime,
+                    selectedDate,
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
     );
-    return;
   }
 }
