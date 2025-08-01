@@ -1,70 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:todo_app/models/task_model.dart';
 
-class TaskList extends StatelessWidget {
+class TaskListTile extends StatelessWidget {
   final Task task;
-  final Function(bool?) onCheckboxChanged;
+  final Function(bool) onToggleComplete;
+  final Function() onTap;
+  final Function() onDelete;
 
-  const TaskList({
+  const TaskListTile({
     super.key,
     required this.task,
-    required this.onCheckboxChanged,
+    required this.onToggleComplete,
+    required this.onTap,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: ListTile(
+        leading: Checkbox(
+          value: task.isCompleted,
+          onChanged: (value) => onToggleComplete(value ?? false),
+        ),
+        title: Text(
+          task.title,
+          style: TextStyle(
+            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+          ),
+        ),
+        subtitle: Text(
+          'Due: ${task.dueDate.toLocal().toString().split(' ')[0]}',
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Checkbox(
-              value: task.isCompleted,
-              onChanged: onCheckboxChanged,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: onTap,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    task.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          decoration: task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        task.formattedDate,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.access_time, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        task.formattedTime,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: onDelete,
             ),
-            if (task.isOverdue)
-              const Icon(Icons.warning, color: Colors.orange),
           ],
         ),
       ),

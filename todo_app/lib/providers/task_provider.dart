@@ -5,41 +5,50 @@ class TaskProvider with ChangeNotifier {
   final List<Task> _tasks = [];
 
   List<Task> get allTasks => _tasks;
-  List<Task> get todayTasks => _tasks.where((task) => task.isToday).toList();
   List<Task> get completedTasks => _tasks.where((task) => task.isCompleted).toList();
   List<Task> get pendingTasks => _tasks.where((task) => !task.isCompleted).toList();
-  
-  int get todayTaskCount => todayTasks.length;
-  int get allTaskCount => _tasks.length;
-  int get overdueTaskCount => _tasks.where((task) => task.isOverdue).length;
-  int get completedTaskCount => completedTasks.length;
+  List<Task> get todayTasks => _tasks.where((task) => 
+      task.dueDate.year == DateTime.now().year &&
+      task.dueDate.month == DateTime.now().month &&
+      task.dueDate.day == DateTime.now().day).toList();
 
-  void addTask(String title, TimeOfDay time, DateTime date) {
-    final newTask = Task(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      time: time,
-      date: date,
-    );
-    _tasks.add(newTask);
+  // CRUD Operations
+  void createTask(String title, DateTime dueDate) {
+    final task = Task.createNew(title: title, dueDate: dueDate);
+    _tasks.add(task);
     notifyListeners();
   }
 
-  void toggleTaskCompletion(String taskId) {
-    final index = _tasks.indexWhere((task) => task.id == taskId);
+  Task? readTask(String id) {
+    return _tasks.firstWhere((task) => task.id == id);
+  }
+
+  void updateTask(String id, {String? title, DateTime? dueDate, bool? isCompleted}) {
+    final index = _tasks.indexWhere((task) => task.id == id);
     if (index != -1) {
-      _tasks[index].isCompleted = !_tasks[index].isCompleted;
+      final task = _tasks[index];
+      if (title != null) task.title = title;
+      if (dueDate != null) task.dueDate = dueDate;
+      if (isCompleted != null) {
+        task.isCompleted = isCompleted;
+        task.completedAt = isCompleted ? DateTime.now() : null;
+      }
+      task.updatedAt = DateTime.now();
       notifyListeners();
     }
   }
 
-  void deleteTask(String taskId) {
-    _tasks.removeWhere((task) => task.id == taskId);
+  void deleteTask(String id) {
+    _tasks.removeWhere((task) => task.id == id);
     notifyListeners();
   }
 
-  void deleteAllCompletedTasks() {
-    _tasks.removeWhere((task) => task.isCompleted);
-    notifyListeners();
-  }
+  // Credit/Attribution
+  String get appCredits => '''
+Todo App with CRUD Operations
+Developed by [Your Name]
+Version 1.0.0
+Built with Flutter
+© ${DateTime.now().year} All rights reserved
+''';
 }

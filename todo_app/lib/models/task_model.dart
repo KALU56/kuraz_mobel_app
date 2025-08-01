@@ -1,40 +1,57 @@
-import 'package:flutter/material.dart';
-
 class Task {
-  final String id;
-  final String title;
-  final TimeOfDay time;
-  final DateTime date;
+  String id;
+  String title;
+  DateTime dueDate;
   bool isCompleted;
+  DateTime? completedAt;
+  DateTime createdAt;
+  DateTime updatedAt;
 
   Task({
     required this.id,
     required this.title,
-    required this.time,
-    required this.date,
+    required this.dueDate,
     this.isCompleted = false,
+    this.completedAt,
+    required this.createdAt,
+    required this.updatedAt,
   });
 
-  String get formattedTime {
-    final hour = time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
-  }
-
-  String get formattedDate {
-    return '${date.day}/${date.month}/${date.year}';
-  }
-
-  bool get isToday {
+  factory Task.createNew({
+    required String title,
+    required DateTime dueDate,
+  }) {
     final now = DateTime.now();
-    return date.year == now.year && 
-           date.month == now.month && 
-           date.day == now.day;
+    return Task(
+      id: now.millisecondsSinceEpoch.toString(),
+      title: title,
+      dueDate: dueDate,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 
-  bool get isOverdue {
-    final now = DateTime.now();
-    return date.isBefore(DateTime(now.year, now.month, now.day)) && !isCompleted;
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'title': title,
+      'dueDate': dueDate.toIso8601String(),
+      'isCompleted': isCompleted,
+      'completedAt': completedAt?.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  factory Task.fromMap(Map<String, dynamic> map) {
+    return Task(
+      id: map['id'],
+      title: map['title'],
+      dueDate: DateTime.parse(map['dueDate']),
+      isCompleted: map['isCompleted'],
+      completedAt: map['completedAt'] != null ? DateTime.parse(map['completedAt']) : null,
+      createdAt: DateTime.parse(map['createdAt']),
+      updatedAt: DateTime.parse(map['updatedAt']),
+    );
   }
 }

@@ -2,103 +2,126 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_app/models/task_model.dart';
 import 'package:todo_app/providers/task_provider.dart';
-import 'package:todo_app/widget/task_list.dart';
 
+class TaskDetailScreen extends StatefulWidget {
+  final Task task;
 
-class AllDetail extends StatefulWidget {
-  const AllDetail({super.key});
+  const TaskDetailScreen({super.key, required this.task});
 
   @override
-  State<AllDetail> createState() => _AllDetailState();
+  State<TaskDetailScreen> createState() => _TaskDetailScreenState();
 }
 
-class _AllDetailState extends State<AllDetail> {
-  int _currentFilterIndex = 0;
+class _TaskDetailScreenState extends State<TaskDetailScreen> {
+  late Task _editableTask;
+
+  @override
+  void initState() {
+    super.initState();
+    _editableTask = Task.fromMap(widget.task.toMap());
+  }
 
   @override
   Widget build(BuildContext context) {
-    final taskProvider = Provider.of<TaskProvider>(context);
-    List<Task> filteredTasks = _getFilteredTasks(taskProvider);
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('All Tasks'),
+        title: const Text('Task Details'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              taskProvider.deleteAllCompletedTasks();
-            },
+            icon: const Icon(Icons.save),
+            onPressed: _saveChanges,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: TextEditingController(text: _editableTask.title),
+              decoration: const InputDecoration(labelText: 'Task Title'),
+              onChanged: (value) => _editableTask.title = value,
+            ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _editableTask.dueDate,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) {
+                  setState(() {
+                    _editableTask.dueDate = date;
+                  });
+                }
+              },
+              child: Text('Due Date: ${_editableTask.dueDate.toLocal().toString().split(' ')[0]}'),
+            ),
+            const SizedBox(height: 16),
+            Row(
               children: [
-                _buildFilterButton('All', 0),
-                _buildFilterButton('Today', 1),
-                _buildFilterButton('Pending', 2),
-                _buildFilterButton('Completed', 3),
+                const Text('Completed:'),
+                Switch(
+                  value: _editableTask.isCompleted,
+                  onChanged: (value) {
+                    setState(() {
+                      _editableTask.isCompleted = value;
+                      _editableTask.completedAt = value ? DateTime.now() : null;
+                    });
+                  },
+                ),
               ],
             ),
-          ),
-          Expanded(
-            child: filteredTasks.isEmpty
-                ? const Center(
-                    child: Text('No tasks found'),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredTasks.length,
-                    itemBuilder: (context, index) {
-                      final task = filteredTasks[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: TaskList(
-                          task: task,
-                          onCheckboxChanged: (value) {
-                            taskProvider.toggleTaskCompletion(task.id);
-                          },
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+            const Spacer(),
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                onPressed: () => _confirmDeleteTask(context),
+                child: const Text('Delete Task'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  List<Task> _getFilteredTasks(TaskProvider taskProvider) {
-    switch (_currentFilterIndex) {
-      case 1: // Today
-        return taskProvider.todayTasks;
-      case 2: // Pending
-        return taskProvider.pendingTasks;
-      case 3: // Completed
-        return taskProvider.completedTasks;
-      default: // All
-        return taskProvider.allTasks;
-    }
+  void _saveChanges() {
+    Provider.of<TaskProvider>(context, listen: false).updateTask(
+      _editableTask.id,
+      title: _editableTask.title,
+      dueDate: _editableTask.dueDate,
+      isCompleted: _editableTask.isCompleted,
+    );
+    Navigator.pop(context);
   }
 
-  Widget _buildFilterButton(String text, int index) {
-    return TextButton(
-      onPressed: () {
-        setState(() {
-          _currentFilterIndex = index;
-        });
+  void _confirmDeleteTask(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Task'),
+          content: const Text('Are you sure you want to delete this task?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Provider.of<TaskProvider>(context, listen: false).deleteTask(_editableTask.id);
+                Navigator.pop(context); // Close dialog
+                Navigator.pop(context); // Go back to home screen
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
       },
-      style: TextButton.styleFrom(
-        backgroundColor: _currentFilterIndex == index
-            ? Colors.blue.withOpacity(0.2)
-            : Colors.transparent,
-      ),
-      child: Text(text),
     );
   }
 }

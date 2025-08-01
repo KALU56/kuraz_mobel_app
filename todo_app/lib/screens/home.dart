@@ -1,128 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:todo_app/models/task_model.dart';
 import 'package:todo_app/providers/task_provider.dart';
-
 import 'package:todo_app/screens/all_detal.dart';
 import 'package:todo_app/widget/task_card.dart';
 import 'package:todo_app/widget/task_list.dart';
 
 
-
-class Home extends StatefulWidget {
-  const Home({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeState extends State<Home> {
-  TimeOfDay _timeOfDay = TimeOfDay.now();
-  DateTime _selectedDate = DateTime.now();
-
+class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
+    // Access TaskProvider to manage tasks
     final taskProvider = Provider.of<TaskProvider>(context);
 
     return Scaffold(
-    appBar: AppBar(
-      title: Text(
-        'Hello ',
-        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+      // App Bar with title and credits button
+      appBar: AppBar(
+        title: const Text('Todo App'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () => _showCreditsDialog(context),
+          ),
+        ],
       ),
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.notifications),
-          onPressed: () {},
-        ),
-      ],
-    ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-          
-            const SizedBox(height: 24),
-            
-            // Task Summary Cards
-            Row(
+
+      // Main Body Content
+      body: Column(
+        children: [
+          // Summary Cards Row
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
               children: [
-                TaskCard(
-                  title: "Today",
-                  icon: Icons.today,
-                  count: taskProvider.todayTaskCount,
-                  color: Colors.blue[100]!,
-                  onTap: () {},
-                ),
-                const SizedBox(width: 16),
-                TaskCard(
-                  title: "Completed",
-                  icon: Icons.check_circle,
-                  count: taskProvider.completedTaskCount,
-                  color: Colors.green[100]!,
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                TaskCard(
-                  title: "All",
-                  icon: Icons.list,
-                  count: taskProvider.allTaskCount,
-                  color: Colors.purple[100]!,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AllDetail()),
-                    );
-                  },
-                ),
-                const SizedBox(width: 16),
-                TaskCard(
-                  title: "Overdue",
-                  icon: Icons.warning,
-                  count: taskProvider.overdueTaskCount,
-                  color: Colors.orange[100]!,
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            
-            // Today's Tasks
-            Text(
-              'Today\'s Tasks',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
+                // All Tasks Card
+                Expanded(
+                  child: TaskCard(
+                    title: 'All Tasks',
+                    count: taskProvider.allTasks.length,
+                    color: Colors.blue[100]!,
                   ),
+                ),
+                const SizedBox(width: 16),
+                // Completed Tasks Card
+                Expanded(
+                  child: TaskCard(
+                    title: 'Completed',
+                    count: taskProvider.completedTasks.length,
+                    color: Colors.green[100]!,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            
-            if (taskProvider.todayTasks.isEmpty)
-              const Center(
-                child: Text('No tasks for today'),
-              )
-            else
-              Column(
-                children: taskProvider.todayTasks.map((task) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: TaskList(
-                      task: task,
-                      onCheckboxChanged: (value) {
-                        taskProvider.toggleTaskCompletion(task.id);
-                      },
-                    ),
-                  );
-                }).toList(),
-              ),
-          ],
-        ),
+          ),
+
+          // Task List
+          Expanded(
+            child: ListView.builder(
+              itemCount: taskProvider.allTasks.length,
+              itemBuilder: (context, index) {
+                final task = taskProvider.allTasks[index];
+                return TaskListTile(
+                  task: task,
+                  onTap: () => _navigateToTaskDetail(context, task),
+                  onToggleComplete: (value) {
+                    taskProvider.updateTask(task.id, isCompleted: value);
+                  },
+                  onDelete: () => _confirmDeleteTask(context, task.id),
+                );
+              },
+            ),
+          ),
+        ],
       ),
+
+      // Floating Action Button for Adding New Tasks
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTaskDialog(context),
         child: const Icon(Icons.add),
@@ -130,87 +89,116 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Future<void> _showAddTaskDialog(BuildContext context) async {
-    String taskTitle = '';
-    TimeOfDay selectedTime = _timeOfDay;
-    DateTime selectedDate = _selectedDate;
+  // ================ HELPER METHODS ================ //
 
-    await showDialog(
+  // Show Add Task Dialog
+  void _showAddTaskDialog(BuildContext context) {
+    final titleController = TextEditingController();
+    DateTime selectedDate = DateTime.now();
+
+    showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Add New Task'),
-          content: SizedBox(
-            height: 180,
-            child: Column(
-              children: [
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Task Title',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (value) => taskTitle = value,
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () async {
-                          final date = await showDatePicker(
-                            context: context,
-                            initialDate: selectedDate,
-                            firstDate: DateTime.now(),
-                            lastDate: DateTime(2100),
-                          );
-                          if (date != null) {
-                            selectedDate = date;
-                          }
-                        },
-                        child: Text(
-                          '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () async {
-                          final time = await showTimePicker(
-                            context: context,
-                            initialTime: selectedTime,
-                          );
-                          if (time != null) {
-                            selectedTime = time;
-                          }
-                        },
-                        child: Text(
-                          selectedTime.format(context),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Task Title Input
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Task Title'),
+              ),
+              const SizedBox(height: 16),
+              // Due Date Picker
+              TextButton(
+                onPressed: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: selectedDate,
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime(2100),
+                  );
+                  if (date != null) selectedDate = date;
+                },
+                child: Text('Due: ${selectedDate.toLocal().toString().split(' ')[0]}'),
+              ),
+            ],
           ),
           actions: [
+            // Cancel Button
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
+            // Add Task Button
             ElevatedButton(
               onPressed: () {
-                if (taskTitle.isNotEmpty) {
-                  Provider.of<TaskProvider>(context, listen: false).addTask(
-                    taskTitle,
-                    selectedTime,
+                if (titleController.text.isNotEmpty) {
+                  Provider.of<TaskProvider>(context, listen: false).createTask(
+                    titleController.text,
                     selectedDate,
                   );
                   Navigator.pop(context);
                 }
               },
-              child: const Text('Save'),
+              child: const Text('Add Task'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Navigate to Task Detail Screen
+  void _navigateToTaskDetail(BuildContext context, Task task) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TaskDetailScreen(task: task),
+      ),
+    );
+  }
+
+  // Confirm Task Deletion
+  void _confirmDeleteTask(BuildContext context, String taskId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Task'),
+          content: const Text('Are you sure you want to delete this task?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Provider.of<TaskProvider>(context, listen: false).deleteTask(taskId);
+                Navigator.pop(context);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Show App Credits Dialog
+  void _showCreditsDialog(BuildContext context) {
+    final credits = Provider.of<TaskProvider>(context, listen: false).appCredits;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('App Credits'),
+          content: Text(credits),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
             ),
           ],
         );

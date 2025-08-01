@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:todo_app/screens/home.dart';
 import 'package:todo_app/providers/task_provider.dart';
+import 'package:todo_app/screens/home.dart';
+
 
 void main() {
   runApp(
@@ -18,12 +19,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo App',
+      title: 'Todo App with CRUD',
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const Home(),
+      home: const HomeScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
